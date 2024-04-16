@@ -28,6 +28,9 @@ type Options = {
   -- generic.
   transform: Bool,
 
+  -- Prune algorithm
+  prune: Bool,
+
   -- Where to resample in SMC
   resample: String,
 
@@ -60,7 +63,20 @@ type Options = {
   seed: Option Int,
 
   -- (temporary option, the end-goal is that we should only ever use peval)
-  extractSimplification: String
+  extractSimplification: String,
+
+  -- ODE solver algorithm
+  odeSolverMethod: String,
+
+  -- Size of fixed step-size ODE solvers
+  stepSize: Float,
+  
+  -- Whether to subsample the posterior distribution
+  -- used in conjuction with smc-apf and smc-bpf and without no-print-samples
+  subsample: Bool,
+
+  -- Used in conjuction with subsample, how many subsamples to take
+  subsampleSize: Int
 }
 
 -- Default values for options
@@ -78,6 +94,7 @@ let default = {
   outputMc = false,
   output = "out",
   transform = false,
+  prune = false,
   printSamples = true,
   stackSize = 10000,
   cps = "partial",
@@ -87,7 +104,11 @@ let default = {
   printAcceptanceRate = false,
   pmcmcParticles = 2,
   seed = None (),
-  extractSimplification = "none"
+  extractSimplification = "none",
+  odeSolverMethod = "rk4",
+  stepSize = 1e-3,
+  subsample = false,
+  subsampleSize = 1
 }
 
 -- Options configuration
@@ -156,6 +177,10 @@ let config = [
     "The model is transformed to an efficient representation if possible.",
     lam p: ArgPart Options.
       let o: Options = p.options in {o with transform = true}),
+  ([("--prune", "", "")],
+    "The model is pruned if possible.",
+    lam p: ArgPart Options.
+      let o: Options = p.options in {o with transform = true}),
   ([("--no-print-samples", "", "")],
     "Do not print the final samples in the compiled program.",
     lam p: ArgPart Options.
@@ -204,7 +229,33 @@ let config = [
   ([("--extract-simplification", " ", "<option>")],
     join ["Temporary flag that decides the simplification approach after extraction in the MExpr compiler backend. The supported options are: none, inline, and peval. Default: ", default.extractSimplification, ". Eventually, we will remove this option and only use peval."],
     lam p: ArgPart Options.
-      let o: Options = p.options in {o with extractSimplification = argToString p})
+      let o: Options = p.options in {o with extractSimplification = argToString p}),
+  ([("--ode-solve-method", " ", "<method>")],
+    join [
+      "The selected ODE solving method. The supported methods are: rk4. Default: ",
+      default.odeSolverMethod
+    ],
+    lam p: ArgPart Options.
+      let o: Options = p.options in {o with odeSolverMethod = argToString p}),
+  ([("--ode-step-size", " ", "<value>")],
+   join [
+     "The step-size for fixed step-size ODE solvers. Default: ",
+     float2string default.stepSize, "."
+   ],
+   lam p : ArgPart Options. let o : Options = p.options in {o with stepSize = argToFloatMin p 0. }),
+
+  ([("--subsample", "", "")],
+    "Whether to subsample the posterior distribution. Use in conjuction with -m smc-apf or smc-bpf and without --no-print-samples",
+    lam p: ArgPart Options.
+      let o: Options = p.options in {o with subsample = true}),
+
+  ([("-n", " ", "<subsample size>")],
+   join [
+        "The number of subsamples to draw if --subsample is selected. Default: ",
+    int2string default.subsampleSize, "."
+       ],
+       lam p: ArgPart Options.
+        let o: Options = p.options in {o with subsampleSize = argToIntMin p 1})
 ]
 
 -- Menu

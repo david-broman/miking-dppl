@@ -4,7 +4,6 @@ include "mexpr/keyword-maker.mc"
 include "mexpr/builtin.mc"
 
 include "coreppl.mc"
-include "pgm.mc"
 include "inference/smc.mc"
 
 -- Include the inference method definition definition files.
@@ -15,23 +14,37 @@ include "inference/mcmc-lightweight.mc"
 include "inference/mcmc-naive.mc"
 include "inference/mcmc-trace.mc"
 include "inference/pmcmc-pimh.mc"
+include "solveode/rk4.mc"
 
 lang DPPLParser =
   BootParser + MExprPrettyPrint + MExprPPL + Resample +
-  ProbabilisticGraphicalModel + KeywordMaker +
+  KeywordMaker +
 
   ImportanceSamplingMethod + BPFMethod + APFMethod +
   LightweightMCMCMethod  + NaiveMCMCMethod + TraceMCMCMethod +
-	PIMHMethod
+  PIMHMethod +
+
+  RK4Method
+
+  sem _interpretMethod : Expr -> (Info, String, Map SID Expr)
+  sem _interpretMethod =
+  | TmConApp {ident = ident, body = TmRecord r, info = info} ->
+    (info, nameGetStr ident, r.bindings)
+  | t -> errorSingle [infoTm t] "Expected a constructor application"
 
   -- Interprets the argument to infer which encodes the inference method and
   -- its configuration parameters.
   sem interpretInferMethod : Expr -> InferMethod
-  sem interpretInferMethod =
-  | TmConApp {ident = ident, body = TmRecord {bindings = bindings}, info = info} ->
-    inferMethodFromCon info bindings (nameGetStr ident)
-  | t -> errorSingle [infoTm t] "Expected a constructor application"
+  sem interpretInferMethod =| tm ->
+    match _interpretMethod tm with (info, ident, bindings) in
+    inferMethodFromCon info bindings ident
 
+  -- Interprets the argument to solveode which encodes the solver method and
+  -- its configuration parameters.
+  sem interpretODESolverMethod : Expr -> ODESolverMethod
+  sem interpretODESolverMethod =| tm ->
+    match _interpretMethod tm with (info, ident, bindings) in
+    odeSolverMethodFromCon info bindings ident
 
   sem replaceDefaultInferMethod : Options -> Expr -> Expr
   sem replaceDefaultInferMethod options =
@@ -44,6 +57,24 @@ lang DPPLParser =
     in
     mapPre_Expr_Expr mf expr
 
+  sem replaceDefaultODESolverMethod : Options -> Expr -> Expr
+  sem replaceDefaultODESolverMethod options =
+  | expr ->
+    let mf = lam expr.
+      match expr with TmSolveODE ({ method = ODESolverDefault d } & r) then
+        TmSolveODE {
+          r with
+          method =
+            odeSolverMethodFromOptions
+              options d.stepSize options.odeSolverMethod,
+          model = replaceDefaultODESolverMethod options r.model,
+          init = replaceDefaultODESolverMethod options r.model,
+          endTime = replaceDefaultODESolverMethod options r.endTime
+        }
+      else expr
+    in
+    mapPre_Expr_Expr mf expr
+
   -- Keyword maker
   sem isKeyword =
   | TmAssume _ -> true
@@ -51,7 +82,10 @@ lang DPPLParser =
   | TmWeight _ -> true
   | TmInfer _ -> true
   | TmDist _ -> true
-  | TmPlate _ -> true
+  | TmSolveODE _ -> true
+  | TmPrune _ -> true
+  | TmPruned _ -> true
+  | TmCancel _ -> true
 
   sem matchKeywordString (info: Info) =
   | "assume" -> Some (1, lam lst. TmAssume {dist = get lst 0,
@@ -68,10 +102,6 @@ lang DPPLParser =
                                                 info = info})
   | "infer" -> Some (2, lam lst. TmInfer {method = interpretInferMethod (get lst 0),
                                           model = get lst 1,
-                                          ty = TyUnknown {info = info},
-                                          info = info})
-  | "plate" -> Some (2, lam lst. TmPlate {fun = get lst 0,
-                                          lst = get lst 1,
                                           ty = TyUnknown {info = info},
                                           info = info})
   | "Uniform" -> Some (2, lam lst. TmDist {dist = DUniform {a = get lst 0, b = get lst 1},
@@ -110,12 +140,30 @@ lang DPPLParser =
   | "Binomial" -> Some (2, lam lst. TmDist {dist = DBinomial {n = get lst 0, p = get lst 1},
                                         ty = TyUnknown {info = info},
                                         info = info})
+  | "solveode" -> Some (4, lam lst. TmSolveODE {method = interpretODESolverMethod (get lst 0),
+                                             model = get lst 1,
+                                             init = get lst 2,
+                                             endTime = get lst 3,
+                                             ty = TyUnknown {info = info},
+                                             info = info})
+  | "prune" -> Some (1, lam lst. TmPrune {dist = get lst 0,
+                                          ty = TyUnknown {info = info},
+                                          info = info})
+  | "pruned" -> Some (1, lam lst. TmPruned {prune = get lst 0,
+                                          ty = TyUnknown {info = info},
+                                          info = info})
+  | "cancel" -> Some (1, lam lst. TmCancel {dist = getDistCancel (get lst 0),
+                                          value = getValueCancel (get lst 0),
+                                          ty = TyUnknown {info = info},
+                                          info = info})
 
   sem isTypeKeyword =
   | TyDist _ -> true
+  | TyPruneInt _ -> true
 
   sem matchTypeKeywordString (info: Info) =
   | "Dist" -> Some(1, lam lst. TyDist { info = info, ty = get lst 0 })
+  | "PruneInt" -> Some(0, lam lst. TyPruneInt { info = info})
 
 end
 
