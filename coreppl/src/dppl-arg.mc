@@ -76,7 +76,11 @@ type Options = {
   subsample: Bool,
 
   -- Used in conjuction with subsample, how many subsamples to take
-  subsampleSize: Int
+  subsampleSize: Int,
+
+  -- Output the file debug-out.mc which contains the generated code for the
+  -- model. By default, it is a temp file that is deleted.
+  debugOut: Bool
 }
 
 -- Default values for options
@@ -108,7 +112,8 @@ let default = {
   odeSolverMethod = "rk4",
   stepSize = 1e-3,
   subsample = false,
-  subsampleSize = 1
+  subsampleSize = 1,
+  debugOut = false
 }
 
 -- Options configuration
@@ -255,7 +260,11 @@ let config = [
     int2string default.subsampleSize, "."
        ],
        lam p: ArgPart Options.
-        let o: Options = p.options in {o with subsampleSize = argToIntMin p 1})
+        let o: Options = p.options in {o with subsampleSize = argToIntMin p 1}),
+  ([("--debug-out", "", "")],
+    "If enabled, the file 'debug-out.mc' is generated and kept, instead of a temp file that is deleted. ",
+    lam p: ArgPart Options.
+      let o: Options = p.options in {o with debugOut = true})
 ]
 
 -- Menu

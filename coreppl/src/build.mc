@@ -13,7 +13,7 @@ let runCommandWithError = lam cmds. lam errMsg.
 let buildMExpr = lam options. lam ast.
 
   -- Compile to MExpr
-  let outName = sysTempFileMake () in
+  let outName = if options.debugOut then "debug-out.mc" else sysTempFileMake () in
   writeFile outName (use MExpr in concat "mexpr\n" (mexprToString ast));
 
   -- Make intermediate mc file visible in the current dir if option is set
@@ -30,7 +30,7 @@ let buildMExpr = lam options. lam ast.
         "--output", options.output,
         outName] msg
   );
-  sysDeleteFile outName;
+  if options.debugOut then () else sysDeleteFile outName;
   ()
 
 let buildRootPPL = lam options. lam ast.
