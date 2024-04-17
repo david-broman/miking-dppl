@@ -127,6 +127,7 @@ lang MExprCompile =
 
     -- Load the inference runtimes used in the provided AST, and collect
     -- identifiers of common methods within the runtimes.
+    -- NOTE: this is only used when noInfer is false. Consider refactoring.
     let inferRuntimes = loadRuntimes options ast in
 
     -- If no infers are found, the entire AST is the model code, so we transform
