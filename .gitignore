@@ -13,3 +13,6 @@ out.mc
 out.cu
 a.out
 tool
+debug-out.mc
+.DS_Store
+.python-version

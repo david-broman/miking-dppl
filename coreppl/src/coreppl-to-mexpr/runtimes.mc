@@ -8,6 +8,7 @@ include "../src-location.mc"
 -- Inference methods
 include "smc-apf/compile.mc"
 include "smc-bpf/compile.mc"
+include "smc-par-bpf/compile.mc"
 include "is-lw/compile.mc"
 include "mcmc-naive/compile.mc"
 include "mcmc-trace/compile.mc"
@@ -52,6 +53,7 @@ lang LoadRuntime =
   | Importance _ -> compilerImportance options
   | APF _ -> compilerAPF options
   | BPF _ -> compilerBPF options
+  | ParallelBPF _ -> compilerParallelBPF options
   | LightweightMCMC _ -> compilerLightweightMCMC options
   | NaiveMCMC _ -> compilerNaiveMCMC options
   | TraceMCMC _ -> compilerTraceMCMC options

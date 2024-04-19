@@ -9,6 +9,7 @@ include "inference/smc.mc"
 -- Include the inference method definition definition files.
 include "inference/smc-apf.mc"
 include "inference/smc-bpf.mc"
+include "inference/smc-par-bpf.mc"
 include "inference/is-lw.mc"
 include "inference/mcmc-lightweight.mc"
 include "inference/mcmc-naive.mc"
@@ -20,9 +21,9 @@ lang DPPLParser =
   BootParser + MExprPrettyPrint + MExprPPL + Resample +
   KeywordMaker +
 
-  ImportanceSamplingMethod + BPFMethod + APFMethod +
-  LightweightMCMCMethod  + NaiveMCMCMethod + TraceMCMCMethod +
-  PIMHMethod +
+  ImportanceSamplingMethod + BPFMethod + ParallelBPFMethod + 
+  APFMethod + LightweightMCMCMethod  + NaiveMCMCMethod + 
+  TraceMCMCMethod + PIMHMethod +
 
   RK4Method
 

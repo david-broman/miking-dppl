@@ -64,7 +64,8 @@ lang CPPLBackcompat = LoadRuntime
             match options.method with
                 "is-lw"
               | "smc-bpf"
-              | "smc-apf"
+              | "smc-par-bpf"
+              | "smc-apf"              
             then
               app_ (var_ "printNormConst") (var_ "d")
             else match options.method with
