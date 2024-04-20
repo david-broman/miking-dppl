@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Example:
+
+if [ $# -eq 0 ]; then
+    echo "Simple script for testing performance of different inference algorithms."
+    echo "Example:"
+    echo "   ./scripts/perftest 10000000 coreppl/models/coin.mc"
+    exit 1
+fi
+
+particles=$1
+model=$2
+echo Particles $particles
+
+echo "is-lw, no CPS"
+cppl -m is-lw --cps none --no-print-samples $model
+time ./out $particles
+
+echo "smc-par-bpf, no CPS"
+cppl -m smc-par-bpf --cps none --no-print-samples $model
+time ./out $particles
+
+echo "smc-par-bpf, full CPS"
+cppl -m smc-par-bpf --cps full --no-print-samples $model
+time ./out $particles
+
+echo "smc-par-bpf, partial CPS"
+cppl -m smc-par-bpf --cps partial --no-print-samples $model
+time ./out $particles
