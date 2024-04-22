@@ -38,10 +38,11 @@ let run : all a. Unknown -> (State -> a) -> use RuntimeDistBase in Dist a =
   let particles = config.particles in
 
   let weightInit = 0.0 in
---  let states = createList particles (lam. ref weightInit) in
   let warray = tensorCreateDense [particles] (lam. weightInit) in
+  let indices = createList particles (lam x. subi (subi particles x) 1) in
 --  let res = mapReverse model states in
-  let res = sim_particles particles warray [] model in
+  let res = foldl (lam acc. lam i. cons (model (warray, i)) acc) [] indices in
+--  let res = sim_particles particles warray [] model in
 --  let weights = mapReverse deref states in
   let weights = tensorToSeqExn warray in
   constructDistEmpirical res weights
