@@ -36,7 +36,7 @@ lang LoadRuntime =
     topSymEnv : SymEnv
 
   }
-
+    
   type InferRuntimes = {
     -- Maps each kind of infer method (ignoring configuration parameters) to
     -- information about the runtime it uses.
@@ -232,4 +232,4 @@ lang LoadRuntime =
                    tyConEnv = replaceInEnv symEnv.tyConEnv}
     in
     replaceInSymEnv symEnv
-end
+end 

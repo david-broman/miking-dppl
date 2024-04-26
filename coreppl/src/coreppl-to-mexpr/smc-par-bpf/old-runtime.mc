@@ -13,10 +13,11 @@ include "../runtime-dists.mc"
 -- In importance sampling, the state is simply the accumulated weight.
 --type State = Ref Float
 type State = (Tensor[Float], Int)
-
+ss 
 --let updateWeight = lam v. lam state. modref state (addf (deref state) v)
-let updateWeight = lam v. lam state. 
-  tensorSetExn state.0 [state.1] (addf (tensorGetExn state.0 [state.1]) v)
+--let updateWeight = lam v. lam state. 
+--  tensorSetExn state.0 [state.1] (addf (tensorGetExn state.0 [state.1]) v)
+let updateWeight = lam v. lam state. modref state (addf (deref state) v)
 
 let unwrapOpt : all a. Option a -> a = lam o.
   match o with Some x then x
