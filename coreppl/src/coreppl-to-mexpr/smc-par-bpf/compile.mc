@@ -111,4 +111,4 @@ lang MExprPPLParallelBPF =
 end
 
 let compilerParallelBPF = lam options. use MExprPPLParallelBPF in
-    ("smc-par-bpf/runtime-cps.mc", compileCps options)
+    ("smc-par-bpf/runtime.mc", compileCps options)
